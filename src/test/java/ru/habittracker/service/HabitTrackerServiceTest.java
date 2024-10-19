@@ -1,86 +1,160 @@
 package ru.habittracker.service;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import liquibase.Liquibase;
+import liquibase.database.Database;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.LiquibaseException;
+import liquibase.resource.ClassLoaderResourceAccessor;
+import org.junit.jupiter.api.*;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.Habit;
+import ru.habittracker.model.User;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
-class HabitTrackerServiceTest {
-    private HabitTrackerService habitTrackerService;
+@Testcontainers
+public class HabitTrackerServiceTest {
+
+    @Container
+    public static PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:latest")
+            .withDatabaseName("testdb")
+            .withUsername("postgres")
+            .withPassword("password")
+            .withInitScript("init.sql");
+
+    private static DatabaseConnectionManager dbManager;
+    private static HabitTrackerService habitTrackerService;
+    private static HabitService habitService;
+    private static UserService userService;
+    private static User testUser;
+
+    @BeforeAll
+    public static void globalSetUp() throws SQLException, LiquibaseException {
+        dbManager = new DatabaseConnectionManager(
+                postgresContainer.getJdbcUrl(),
+                postgresContainer.getUsername(),
+                postgresContainer.getPassword(),
+                postgresContainer.getDriverClassName()
+        );
+
+        try (Connection connection = dbManager.getConnection()) {
+            connection.createStatement().execute("SET search_path TO service");
+
+            Database database = DatabaseFactory.getInstance()
+                    .findCorrectDatabaseImplementation(new JdbcConnection(connection));
+
+            database.setDefaultSchemaName("service");
+            database.setLiquibaseSchemaName("service");
+
+            Liquibase liquibase = new Liquibase(
+                    "changelog-test.xml",
+                    new ClassLoaderResourceAccessor(),
+                    database
+            );
+            liquibase.update("");
+        }
+
+        habitTrackerService = new HabitTrackerService(dbManager);
+        habitService = new HabitService(dbManager);
+        userService = new UserService(dbManager);
+    }
 
     @BeforeEach
-    void setUp() {
-        habitTrackerService = new HabitTrackerService();
+    public void setUp() throws SQLException {
+        Optional<User> userOptional = userService.registerUser("trackeruser@example.com", "password123", "Tracker User");
+        assertTrue(userOptional.isPresent(), "Пользователь должен быть успешно создан.");
+        testUser = userOptional.get();
+    }
+
+    @AfterEach
+    public void tearDown() throws SQLException {
+        try (Connection connection = dbManager.getConnection()) {
+            connection.createStatement().execute(
+                    "TRUNCATE TABLE service.habit_records, service.habits, service.users RESTART IDENTITY CASCADE;"
+            );
+        }
     }
 
     @Test
-    void shouldMarkHabitCompletionSuccessfully() {
-        habitTrackerService.markHabitCompletion(1, 101, LocalDate.now());
+    public void testMarkHabitCompletion() {
+        Habit habit = habitService.createHabit(testUser.getId(), "Exercise", "Morning exercise", 1);
+        assertNotNull(habit, "Привычка не должна быть null.");
 
-        String history = habitTrackerService.getHabitHistory(1, 101);
-        assertThat(history).contains(LocalDate.now().toString());
+        habitTrackerService.markHabitCompletion(testUser.getId(), habit.getId(), LocalDate.now());
+
+        String history = habitTrackerService.getHabitHistory(testUser.getId(), habit.getId());
+        assertTrue(history.contains(LocalDate.now().toString()), "История должна содержать сегодняшнюю дату.");
     }
 
     @Test
-    void shouldHandleNoHistoryAvailable() {
-        String history = habitTrackerService.getHabitHistory(1, 101);
-        assertThat(history).isEqualTo("История отсутствует.");
+    public void testCalculateStreak() {
+        Habit habit = habitService.createHabit(testUser.getId(), "Exercise", "Morning exercise", 1);
+        assertNotNull(habit, "Привычка не должна быть null.");
 
+        habitTrackerService.markHabitCompletion(testUser.getId(), habit.getId(), LocalDate.now().minusDays(2));
+        habitTrackerService.markHabitCompletion(testUser.getId(), habit.getId(), LocalDate.now().minusDays(1));
+        habitTrackerService.markHabitCompletion(testUser.getId(), habit.getId(), LocalDate.now());
+
+        int streak = habitTrackerService.calculateStreak(testUser.getId(), habit.getId());
+        assertEquals(3, streak, "Серия должна быть равна 3.");
     }
 
     @Test
-    void shouldCalculateStreakSuccessfully() {
-        habitTrackerService.markHabitCompletion(1, 101, LocalDate.now().minusDays(1));
-        habitTrackerService.markHabitCompletion(1, 101, LocalDate.now());
+    public void testCalculateSuccessRate() {
+        Habit habit = habitService.createHabit(testUser.getId(), "Exercise", "Morning exercise", 1);
+        assertNotNull(habit, "Привычка не должна быть null.");
 
-        int streak = habitTrackerService.calculateStreak(1, 101);
-        assertThat(streak).isEqualTo(2);
+        LocalDate startDate = LocalDate.now().minusDays(30);
+        for (int i = 0; i < 30; i++) {
+            if (i % 2 == 0) {
+                habitTrackerService.markHabitCompletion(testUser.getId(), habit.getId(), startDate.plusDays(i));
+            }
+        }
+
+        double successRate = habitTrackerService.calculateSuccessRate(testUser.getId(), habit.getId());
+        assertEquals(50.0, successRate, 0.1, "Процент успеха должен быть примерно 50%.");
     }
 
     @Test
-    void shouldCalculateZeroStreakWhenNoCompletion() {
-        int streak = habitTrackerService.calculateStreak(1, 101);
-        assertThat(streak).isEqualTo(0);
+    public void testGenerateProgressReport() {
+        Habit habit1 = habitService.createHabit(testUser.getId(), "Exercise", "Morning exercise", 1);
+        Habit habit2 = habitService.createHabit(testUser.getId(), "Read", "Read a book", 1);
+
+        habitTrackerService.markHabitCompletion(testUser.getId(), habit1.getId(), LocalDate.now().minusDays(1));
+        habitTrackerService.markHabitCompletion(testUser.getId(), habit1.getId(), LocalDate.now());
+
+        habitTrackerService.markHabitCompletion(testUser.getId(), habit2.getId(), LocalDate.now().minusDays(2));
+        habitTrackerService.markHabitCompletion(testUser.getId(), habit2.getId(), LocalDate.now().minusDays(1));
+
+        List<Habit> habits = habitService.getHabits(testUser.getId());
+        String report = habitTrackerService.generateProgressReport(testUser.getId(), habits);
+
+        assertNotNull(report, "Отчет не должен быть null.");
+        assertTrue(report.contains("Exercise"), "Отчет должен содержать привычку 'Exercise'.");
+        assertTrue(report.contains("Read"), "Отчет должен содержать привычку 'Read'.");
     }
 
     @Test
-    void shouldCalculateSuccessRateSuccessfully() {
-        habitTrackerService.markHabitCompletion(1, 101, LocalDate.now().minusDays(1));
-        habitTrackerService.markHabitCompletion(1, 101, LocalDate.now());
+    public void testGetHabitHistory() {
+        Habit habit = habitService.createHabit(testUser.getId(), "Meditate", "Evening meditation", 1);
 
-        double successRate = habitTrackerService.calculateSuccessRate(1, 101);
-        assertThat(successRate).isGreaterThan(0.0);
-    }
+        habitTrackerService.markHabitCompletion(testUser.getId(), habit.getId(), LocalDate.now().minusDays(2));
+        habitTrackerService.markHabitCompletion(testUser.getId(), habit.getId(), LocalDate.now().minusDays(1));
+        habitTrackerService.markHabitCompletion(testUser.getId(), habit.getId(), LocalDate.now());
 
-    @Test
-    void shouldCalculateSuccessRateWithNoCompletions() {
-        double successRate = habitTrackerService.calculateSuccessRate(1, 101);
-        assertThat(successRate).isEqualTo(0.0);
-    }
-
-    @Test
-    void shouldGenerateProgressReportSuccessfully() {
-        Habit habit = new Habit(101, "Test Habit", "Description", 1, 1, LocalDate.now());
-        List<Habit> habits = new ArrayList<>();
-        habits.add(habit);
-
-        habitTrackerService.markHabitCompletion(1, 101, LocalDate.now());
-        String report = habitTrackerService.generateProgressReport(1, habits);
-
-        assertThat(report).contains("Test Habit");
-        assertThat(report).contains("Текущая серия: 1 дней");
-    }
-
-    @Test
-    void shouldGenerateProgressReportWithNoHabits() {
-        List<Habit> habits = new ArrayList<>();
-        String report = habitTrackerService.generateProgressReport(1, habits);
-
-        assertThat(report).isEqualTo("Отчет о прогрессе:\n");
+        String history = habitTrackerService.getHabitHistory(testUser.getId(), habit.getId());
+        assertTrue(history.contains(LocalDate.now().toString()), "История должна содержать сегодняшнюю дату.");
+        assertTrue(history.contains(LocalDate.now().minusDays(1).toString()), "История должна содержать дату вчерашнего дня.");
+        assertTrue(history.contains(LocalDate.now().minusDays(2).toString()), "История должна содержать дату позавчерашнего дня.");
     }
 }

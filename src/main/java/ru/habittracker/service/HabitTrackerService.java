@@ -1,41 +1,38 @@
 package ru.habittracker.service;
 
+import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.Habit;
 import ru.habittracker.model.HabitRecord;
+import ru.habittracker.repository.HabitRecordRepository;
 
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class HabitTrackerService {
-    private final Map<Integer, List<HabitRecord>> habitRecords = new HashMap<>();
+    private final HabitRecordRepository habitRecordRepository;
+
+    // Конструктор с внедрением зависимости
+    public HabitTrackerService(DatabaseConnectionManager dbManager) {
+        this.habitRecordRepository = new HabitRecordRepository(dbManager);
+    }
 
     // Метод для отметки выполнения привычки
     public void markHabitCompletion(int userId, int habitId, LocalDate date) {
-        List<HabitRecord> userRecords = habitRecords.computeIfAbsent(userId, k -> new ArrayList<>());
-
-        // Проверяем, существует ли уже запись для данной привычки и даты
-        Optional<HabitRecord> existingRecord = userRecords.stream()
-                .filter(record -> record.getHabitId() == habitId && record.getDate().equals(date))
-                .findFirst();
-
-        if (existingRecord.isPresent()) {
-            existingRecord.get().setCompleted(true);
-        } else {
-            userRecords.add(new HabitRecord(habitId, date, true));
-        }
+        // Здесь можно добавить проверку принадлежности привычки пользователю
+        HabitRecord record = new HabitRecord(habitId, date, true);
+        habitRecordRepository.save(record);
 
         System.out.println("Привычка отмечена как выполненная за " + date + ".");
     }
 
     // Метод для вывода истории выполнения привычки
     public String getHabitHistory(int userId, int habitId) {
-        List<HabitRecord> records = habitRecords.getOrDefault(userId, Collections.emptyList());
+        List<HabitRecord> records = habitRecordRepository.findByHabitId(habitId);
 
         String history = records.stream()
-                .filter(record -> record.getHabitId() == habitId)
                 .sorted(Comparator.comparing(HabitRecord::getDate))
-                .map(record -> record.toString())
+                .map(HabitRecord::toString)
                 .collect(Collectors.joining("\n"));
 
         return history.isEmpty() ? "История отсутствует." : history;
@@ -43,9 +40,9 @@ public class HabitTrackerService {
 
     // Метод для подсчета текущей серии выполнения привычки
     public int calculateStreak(int userId, int habitId) {
-        List<HabitRecord> records = habitRecords.getOrDefault(userId, Collections.emptyList())
+        List<HabitRecord> records = habitRecordRepository.findByHabitId(habitId)
                 .stream()
-                .filter(record -> record.getHabitId() == habitId && record.isCompleted())
+                .filter(HabitRecord::isCompleted)
                 .sorted(Comparator.comparing(HabitRecord::getDate).reversed())
                 .collect(Collectors.toList());
 
@@ -65,12 +62,12 @@ public class HabitTrackerService {
 
     // Метод для подсчета процента успешного выполнения привычки за последний месяц
     public double calculateSuccessRate(int userId, int habitId) {
-        List<HabitRecord> records = habitRecords.getOrDefault(userId, Collections.emptyList());
+        List<HabitRecord> records = habitRecordRepository.findByHabitId(habitId);
         LocalDate thirtyDaysAgo = LocalDate.now().minusDays(30);
 
         long totalDays = 30;
         long completedDays = records.stream()
-                .filter(record -> record.getHabitId() == habitId && record.isCompleted() && !record.getDate().isBefore(thirtyDaysAgo))
+                .filter(record -> record.isCompleted() && !record.getDate().isBefore(thirtyDaysAgo))
                 .count();
 
         return (double) completedDays / totalDays * 100;

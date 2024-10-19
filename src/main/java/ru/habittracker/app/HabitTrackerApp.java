@@ -1,5 +1,6 @@
 package ru.habittracker.app;
 
+import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.Habit;
 import ru.habittracker.model.User;
 import ru.habittracker.service.HabitService;
@@ -24,9 +25,10 @@ public class HabitTrackerApp {
     }
 
     public static void main(String[] args) {
-        UserService userService = new UserService();
-        HabitService habitService = new HabitService();
-        HabitTrackerService habitTrackerService = new HabitTrackerService();
+        DatabaseConnectionManager dbManager = new DatabaseConnectionManager();
+        UserService userService = new UserService(dbManager);
+        HabitService habitService = new HabitService(dbManager);
+        HabitTrackerService habitTrackerService = new HabitTrackerService(dbManager);
 
         HabitTrackerApp app = new HabitTrackerApp(userService, habitService, habitTrackerService);
         app.run();

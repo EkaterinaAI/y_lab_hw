@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.5.xsd">
+
+    <!-- Вставка пользователей -->
+    <changeSet id="11" author="ishchuk">
+        <insert tableName="users" schemaName="service">
+            <column name="email" value="alice@example.com"/>
+            <column name="password" value="password123"/>
+            <column name="name" value="Alice"/>
+        </insert>
+        <insert tableName="users" schemaName="service">
+            <column name="email" value="bob@example.com"/>
+            <column name="password" value="securepass"/>
+            <column name="name" value="Bob"/>
+        </insert>
+        <insert tableName="users" schemaName="service">
+            <column name="email" value="carol@example.com"/>
+            <column name="password" value="mypassword"/>
+            <column name="name" value="Carol"/>
+        </insert>
+    </changeSet>
+
+    <!-- Вставка привычек -->
+    <changeSet id="12" author="ishchuk">
+        <insert tableName="habits" schemaName="service">
+            <column name="title" value="Чтение"/>
+            <column name="description" value="Читать по 30 минут каждый день"/>
+            <column name="frequency" valueNumeric="1"/>
+            <column name="user_id" valueNumeric="1"/>
+            <column name="creation_date" valueDate="2024-01-01"/>
+        </insert>
+        <insert tableName="habits" schemaName="service">
+            <column name="title" value="Бег"/>
+            <column name="description" value="Бегать 5 км три раза в неделю"/>
+            <column name="frequency" valueNumeric="3"/>
+            <column name="user_id" valueNumeric="2"/>
+            <column name="creation_date" valueDate="2024-02-15"/>
+        </insert>
+        <insert tableName="habits" schemaName="service">
+            <column name="title" value="Медитация"/>
+            <column name="description" value="Медитировать по 10 минут ежедневно"/>
+            <column name="frequency" valueNumeric="7"/>
+            <column name="user_id" valueNumeric="3"/>
+            <column name="creation_date" valueDate="2024-03-10"/>
+        </insert>
+    </changeSet>
+
+    <!-- Вставка записей привычек -->
+    <changeSet id="13" author="ishchuk">
+        <insert tableName="habit_records" schemaName="service">
+            <column name="habit_id" valueNumeric="1"/>
+            <column name="date" valueDate="2024-04-01"/>
+            <column name="completed" valueBoolean="true"/>
+        </insert>
+        <insert tableName="habit_records" schemaName="service">
+            <column name="habit_id" valueNumeric="1"/>
+            <column name="date" valueDate="2024-04-02"/>
+            <column name="completed" valueBoolean="false"/>
+        </insert>
+        <insert tableName="habit_records" schemaName="service">
+            <column name="habit_id" valueNumeric="2"/>
+            <column name="date" valueDate="2024-04-03"/>
+            <column name="completed" valueBoolean="true"/>
+        </insert>
+        <insert tableName="habit_records" schemaName="service">
+            <column name="habit_id" valueNumeric="3"/>
+            <column name="date" valueDate="2024-04-04"/>
+            <column name="completed" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

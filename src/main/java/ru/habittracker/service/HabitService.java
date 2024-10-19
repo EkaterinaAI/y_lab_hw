@@ -1,59 +1,48 @@
 package ru.habittracker.service;
 
+import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.Habit;
-import ru.habittracker.util.IdGenerator;
+import ru.habittracker.repository.HabitRepository;
 
 import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
 
 public class HabitService {
-    private final Map<Integer, List<Habit>> habits = new HashMap<>();
+    private final HabitRepository habitRepository;
+
+    public HabitService(DatabaseConnectionManager dbManager) {
+        this.habitRepository = new HabitRepository(dbManager);
+    }
 
     public Habit createHabit(int userId, String title, String description, int frequency) {
-        int habitId = IdGenerator.generateHabitId();
-        Habit habit = new Habit(habitId, title, description, frequency, userId, LocalDate.now());
-        habits.computeIfAbsent(userId, k -> new ArrayList<>()).add(habit);
-        return habit;
+        Habit habit = new Habit(0, title, description, frequency, userId, LocalDate.now());
+        return habitRepository.save(habit);
     }
 
     public List<Habit> getHabits(int userId) {
-        return new ArrayList<>(habits.getOrDefault(userId, Collections.emptyList()));
+        return habitRepository.findByUserId(userId);
     }
 
     public List<Habit> getHabitsByCreationDate(int userId, LocalDate date) {
-        return habits.getOrDefault(userId, Collections.emptyList())
-                .stream()
-                .filter(habit -> habit.getCreationDate().equals(date))
-                .collect(Collectors.toList());
+        return habitRepository.findByUserIdAndCreationDate(userId, date);
     }
 
     public List<Habit> getHabitsByFrequency(int userId, int frequency) {
-        return habits.getOrDefault(userId, Collections.emptyList())
-                .stream()
-                .filter(habit -> habit.getFrequency() == frequency)
-                .collect(Collectors.toList());
+        return habitRepository.findByUserIdAndFrequency(userId, frequency);
     }
 
     public boolean updateHabit(int userId, int habitId, String newTitle, String newDescription, int newFrequency) {
-        List<Habit> userHabits = habits.get(userId);
-        if (userHabits == null) return false;
-
-        for (Habit habit : userHabits) {
-            if (habit.getId() == habitId) {
-                habit.setTitle(newTitle);
-                habit.setDescription(newDescription);
-                habit.setFrequency(newFrequency);
-                return true;
-            }
+        Habit habit = habitRepository.findByIdAndUserId(habitId, userId);
+        if (habit == null) {
+            return false;
         }
-        return false;
+        habit.setTitle(newTitle);
+        habit.setDescription(newDescription);
+        habit.setFrequency(newFrequency);
+        return habitRepository.update(habit);
     }
 
     public boolean deleteHabit(int userId, int habitId) {
-        List<Habit> userHabits = habits.get(userId);
-        if (userHabits == null) return false;
-
-        return userHabits.removeIf(habit -> habit.getId() == habitId);
+        return habitRepository.deleteByIdAndUserId(habitId, userId);
     }
 }

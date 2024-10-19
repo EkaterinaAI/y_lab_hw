@@ -1,88 +1,122 @@
 package ru.habittracker.service;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import liquibase.Liquibase;
+import liquibase.database.Database;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.LiquibaseException;
+import liquibase.resource.ClassLoaderResourceAccessor;
+import org.junit.jupiter.api.*;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.User;
+import ru.habittracker.repository.UserRepository;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-class UserServiceTest {
-    private UserService userService;
+@Testcontainers
+public class UserServiceTest {
+
+    @Container
+    public static PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:latest")
+            .withDatabaseName("testdb")
+            .withUsername("postgres")
+            .withPassword("password")
+            .withInitScript("init.sql"); // Указание скрипта инициализации
+
+    private static DatabaseConnectionManager dbManager;
+    private static UserService userService;
+
+    @BeforeAll
+    public static void globalSetUp() throws SQLException, LiquibaseException {
+        // Инициализируем DatabaseConnectionManager с параметрами тестового контейнера
+        dbManager = new DatabaseConnectionManager(
+                postgresContainer.getJdbcUrl(),
+                postgresContainer.getUsername(),
+                postgresContainer.getPassword(),
+                postgresContainer.getDriverClassName()
+        );
+
+        try (Connection connection = dbManager.getConnection()) {
+            // Устанавливаем search_path на service для текущего соединения
+            connection.createStatement().execute("SET search_path TO service");
+
+            Database database = DatabaseFactory.getInstance()
+                    .findCorrectDatabaseImplementation(new JdbcConnection(connection));
+
+            // Устанавливаем схемы для Liquibase
+            database.setDefaultSchemaName("service");
+            database.setLiquibaseSchemaName("service");
+
+            Liquibase liquibase = new Liquibase(
+                    "changelog-test.xml",
+                    new ClassLoaderResourceAccessor(),
+                    database
+            );
+            liquibase.update("");
+        }
+
+        // Инициализируем UserService с тестовым DatabaseConnectionManager
+        userService = new UserService(dbManager);
+    }
 
     @BeforeEach
-    void setUp() {
-        userService = new UserService();
+    public void setUp() throws SQLException {
+        // Создаем пользователя перед каждым тестом
+        Optional<User> userOptional = userService.registerUser("testuser@example.com", "password123", "Test User");
+        assertTrue(userOptional.isPresent(), "Пользователь должен быть успешно создан.");
+    }
+
+    @AfterEach
+    public void tearDown() throws SQLException {
+        // Очищаем базу данных после каждого теста
+        try (Connection connection = dbManager.getConnection()) {
+            connection.createStatement().execute(
+                    "TRUNCATE TABLE service.habit_records, service.habits, service.users RESTART IDENTITY CASCADE;"
+            );
+        }
     }
 
     @Test
-    void shouldRegisterUserSuccessfully() {
-        Optional<User> user = userService.registerUser("test@example.com", "password", "Test User");
-        assertThat(user).isPresent();
-        assertThat(user.get().getEmail()).isEqualTo("test@example.com");
+    public void testRegisterUser() {
+        Optional<User> userOptional = userService.registerUser("newuser@example.com", "newpassword", "New User");
+        assertTrue(userOptional.isPresent(), "Пользователь должен быть успешно зарегистрирован.");
+        User user = userOptional.get();
+        assertNotNull(user.getId(), "ID пользователя не должен быть null.");
+        assertEquals("newuser@example.com", user.getEmail(), "Email пользователя должен совпадать.");
+        assertEquals("New User", user.getName(), "Имя пользователя должно совпадать.");
     }
 
     @Test
-    void shouldNotRegisterUserWithDuplicateEmail() {
-        userService.registerUser("duplicate@example.com", "password", "Test User");
-        Optional<User> duplicateUser = userService.registerUser("duplicate@example.com", "password", "Test User");
-
-        assertThat(duplicateUser).isEmpty();
+    public void testRegisterUserWithExistingEmail() {
+        // Попытка зарегистрировать пользователя с уже существующим email
+        Optional<User> userOptional = userService.registerUser("testuser@example.com", "password123", "Test User Duplicate");
+        assertFalse(userOptional.isPresent(), "Регистрация пользователя с существующим email должна не удаться.");
     }
 
     @Test
-    void shouldLoginUserSuccessfully() {
-        userService.registerUser("login@example.com", "password", "Login User");
-        Optional<User> user = userService.loginUser("login@example.com", "password");
-
-        assertThat(user).isPresent();
-        assertThat(user.get().getName()).isEqualTo("Login User");
+    public void testLoginUser() {
+        Optional<User> userOptional = userService.loginUser("testuser@example.com", "password123");
+        assertTrue(userOptional.isPresent(), "Пользователь должен успешно войти.");
+        User user = userOptional.get();
+        assertEquals("Test User", user.getName(), "Имя пользователя должно совпадать.");
     }
 
     @Test
-    void shouldNotLoginWithWrongPassword() {
-        userService.registerUser("test@example.com", "password", "Test User");
-        Optional<User> user = userService.loginUser("test@example.com", "wrongpassword");
-
-        assertThat(user).isEmpty();
+    public void testLoginUserWithIncorrectPassword() {
+        Optional<User> userOptional = userService.loginUser("testuser@example.com", "wrongpassword");
+        assertFalse(userOptional.isPresent(), "Вход с неправильным паролем должен не удаться.");
     }
 
     @Test
-    void shouldUpdateUserSuccessfully() {
-        Optional<User> user = userService.registerUser("update@example.com", "password", "Update User");
-        assertTrue(user.isPresent());
-
-        boolean isUpdated = userService.updateUser(user.get().getId(), "newemail@example.com", "newpassword", "New Name");
-        assertTrue(isUpdated);
-
-        Optional<User> updatedUser = userService.loginUser("newemail@example.com", "newpassword");
-        assertTrue(updatedUser.isPresent());
-        assertThat(updatedUser.get().getName()).isEqualTo("New Name");
-    }
-
-    @Test
-    void shouldNotUpdateNonexistentUser() {
-        boolean isUpdated = userService.updateUser(999, "newemail@example.com", "newpassword", "New Name");
-        assertFalse(isUpdated);
-    }
-
-    @Test
-    void shouldDeleteUserSuccessfully() {
-        Optional<User> user = userService.registerUser("delete@example.com", "password", "Delete User");
-        assertTrue(user.isPresent());
-
-        boolean isDeleted = userService.deleteUser(user.get().getId());
-        assertTrue(isDeleted);
-
-        Optional<User> deletedUser = userService.loginUser("delete@example.com", "password");
-        assertThat(deletedUser).isEmpty();
-    }
-
-    @Test
-    void shouldNotDeleteNonexistentUser() {
-        boolean isDeleted = userService.deleteUser(999);
-        assertFalse(isDeleted);
+    public void testLoginNonexistentUser() {
+        Optional<User> userOptional = userService.loginUser("nonexistent@example.com", "password123");
+        assertFalse(userOptional.isPresent(), "Вход несуществующего пользователя должен не удаться.");
     }
 }
