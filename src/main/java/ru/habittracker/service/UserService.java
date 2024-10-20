@@ -1,68 +1,105 @@
 package ru.habittracker.service;
 
+import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.User;
-import ru.habittracker.util.IdGenerator;
+import ru.habittracker.repository.UserRepository;
+import ru.habittracker.repository.interfaces.IUserRepository;
+import ru.habittracker.service.interfaces.IUserService;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
-public class UserService {
-    private final Map<Integer, User> users = new HashMap<>();
-    private final Map<String, Integer> emailToUserId = new HashMap<>(); // Для отслеживания уникальности email
+/**
+ * Сервис для управления пользователями.
+ * <p>
+ * Предоставляет методы для регистрации, входа, обновления и удаления пользователей.
+ * </p>
+ *
+ * author
+ *     Ekaterina Ishchuk
+ */
+public class UserService implements IUserService {
+    private final IUserRepository userRepository;
 
-    // Регистрация пользователя с проверкой уникальности email
+    /**
+     * Конструктор сервиса пользователей.
+     *
+     * @param dbManager менеджер подключения к базе данных
+     */
+    public UserService(DatabaseConnectionManager dbManager) {
+        this.userRepository = new UserRepository(dbManager);
+    }
+
+    /**
+     * Регистрирует нового пользователя.
+     *
+     * @param email    email пользователя
+     * @param password пароль
+     * @param name     имя
+     * @return объект пользователя, если регистрация успешна
+     */
+    @Override
     public Optional<User> registerUser(String email, String password, String name) {
-        if (emailToUserId.containsKey(email)) {
-            System.out.println("Пользователь с таким email уже существует.");
+        // Проверка на уникальность email
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        if (existingUser.isPresent()) {
             return Optional.empty();
         }
 
-        int id = IdGenerator.generateUserId();
-        User user = new User(id, email, password, name);
-
-        users.put(id, user);
-        emailToUserId.put(email, id);
-
-        return Optional.of(user);
+        User user = new User(0, email, password, name);
+        return userRepository.save(user);
     }
 
-    // Аутентификация пользователя по email и паролю
+    /**
+     * Выполняет вход пользователя в систему.
+     *
+     * @param email    email пользователя
+     * @param password пароль
+     * @return объект пользователя, если вход успешен
+     */
+    @Override
     public Optional<User> loginUser(String email, String password) {
-        Integer userId = emailToUserId.get(email);
-        if (userId == null) {
-            return Optional.empty();
+        Optional<User> user = userRepository.findByEmail(email);
+        if (user.isPresent() && user.get().getPassword().equals(password)) {
+            return user;
         }
-        User user = users.get(userId);
-        return (user != null && user.getPassword().equals(password)) ? Optional.of(user) : Optional.empty();
+        return Optional.empty();
     }
 
-    // Обновление профиля пользователя
+    /**
+     * Обновляет данные пользователя.
+     *
+     * @param userId      ID пользователя
+     * @param newEmail    новый email
+     * @param newPassword новый пароль
+     * @param newName     новое имя
+     * @return true, если обновление прошло успешно
+     */
+    @Override
     public boolean updateUser(int userId, String newEmail, String newPassword, String newName) {
-        User user = users.get(userId);
-        if (user == null) return false;
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isEmpty()) return false;
 
-        if (!user.getEmail().equals(newEmail) && emailToUserId.containsKey(newEmail)) {
-            System.out.println("Email уже используется другим пользователем.");
+        Optional<User> emailUser = userRepository.findByEmail(newEmail);
+        if (emailUser.isPresent() && emailUser.get().getId() != userId) {
             return false;
         }
 
-        emailToUserId.remove(user.getEmail());
+        User user = userOptional.get();
         user.setEmail(newEmail);
         user.setPassword(newPassword);
         user.setName(newName);
-        emailToUserId.put(newEmail, userId);
 
-        return true;
+        return userRepository.update(user);
     }
 
-    // Удаление пользователя
+    /**
+     * Удаляет пользователя.
+     *
+     * @param userId ID пользователя
+     * @return true, если удаление прошло успешно
+     */
+    @Override
     public boolean deleteUser(int userId) {
-        User user = users.remove(userId);
-        if (user != null) {
-            emailToUserId.remove(user.getEmail());
-            return true;
-        }
-        return false;
+        return userRepository.delete(userId);
     }
 }
