@@ -4,6 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Класс, представляющий пользователя приложения.
+ *
+ * author
+ *      Ekaterina Ishchuk
+ */
 @Getter
 @Setter
 @AllArgsConstructor

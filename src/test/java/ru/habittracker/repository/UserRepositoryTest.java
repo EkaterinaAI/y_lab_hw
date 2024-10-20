@@ -4,36 +4,38 @@ import liquibase.Liquibase;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
-import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import org.junit.jupiter.api.*;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import ru.habittracker.BaseHabitTest;
 import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.User;
+import ru.habittracker.repository.interfaces.IUserRepository;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@Testcontainers
-public class UserRepositoryTest {
-
-    @Container
-    public static PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:latest")
-            .withDatabaseName("testdb")
-            .withUsername("postgres")
-            .withPassword("password")
-            .withInitScript("init.sql");
+/**
+ * Тестовый класс для {@link ru.habittracker.repository.UserRepository}.
+ * <p>
+ * Проверяет корректность операций с пользователями в базе данных.
+ * </p>
+ *
+ * <p><strong>Автор:</strong> Ekaterina Ishchuk</p>
+ */
+public class UserRepositoryTest extends BaseHabitTest {
 
     private static DatabaseConnectionManager dbManager;
-    private static UserRepository userRepository;
+    private static IUserRepository userRepository;
 
+    /**
+     * Инициализация ресурсов перед всеми тестами.
+     *
+     * @throws Exception возможное исключение при инициализации
+     */
     @BeforeAll
-    public static void globalSetUp() throws SQLException, LiquibaseException {
+    public static void globalSetUp() throws Exception {
         dbManager = new DatabaseConnectionManager(
                 postgresContainer.getJdbcUrl(),
                 postgresContainer.getUsername(),
@@ -61,9 +63,13 @@ public class UserRepositoryTest {
         userRepository = new UserRepository(dbManager);
     }
 
+    /**
+     * Подготовка тестовых данных перед каждым тестом.
+     *
+     * @throws Exception возможное исключение при подготовке данных
+     */
     @BeforeEach
-    public void setUp() throws SQLException {
-        // Clean up before each test
+    public void setUp() throws Exception {
         try (Connection connection = dbManager.getConnection()) {
             connection.createStatement().execute(
                     "TRUNCATE TABLE service.users RESTART IDENTITY CASCADE;"
@@ -71,17 +77,23 @@ public class UserRepositoryTest {
         }
     }
 
+    /**
+     * Тест сохранения пользователя.
+     */
     @Test
     public void testSaveUser() {
         User user = new User(0, "user@example.com", "password123", "Test User");
         Optional<User> savedUserOptional = userRepository.save(user);
 
-        assertTrue(savedUserOptional.isPresent(), "User should be saved successfully.");
+        assertTrue(savedUserOptional.isPresent(), "User should be successfully saved.");
         User savedUser = savedUserOptional.get();
         assertTrue(savedUser.getId() > 0, "User ID should be greater than 0.");
         assertEquals("user@example.com", savedUser.getEmail(), "Emails should match.");
     }
 
+    /**
+     * Тест поиска пользователя по email.
+     */
     @Test
     public void testFindByEmail() {
         User user = new User(0, "user@example.com", "password123", "Test User");
@@ -93,6 +105,9 @@ public class UserRepositoryTest {
         assertEquals("user@example.com", foundUser.getEmail(), "Emails should match.");
     }
 
+    /**
+     * Тест поиска пользователя по ID.
+     */
     @Test
     public void testFindById() {
         User user = new User(0, "user@example.com", "password123", "Test User");
@@ -107,6 +122,9 @@ public class UserRepositoryTest {
         assertEquals(userId, foundUser.getId(), "User IDs should match.");
     }
 
+    /**
+     * Тест обновления информации о пользователе.
+     */
     @Test
     public void testUpdateUser() {
         User user = new User(0, "user@example.com", "password123", "Test User");
@@ -127,6 +145,9 @@ public class UserRepositoryTest {
         assertEquals("Updated Name", updatedUser.getName(), "Name should be updated.");
     }
 
+    /**
+     * Тест удаления пользователя.
+     */
     @Test
     public void testDeleteUser() {
         User user = new User(0, "user@example.com", "password123", "Test User");

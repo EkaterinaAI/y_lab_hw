@@ -4,6 +4,15 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+/**
+ * Управляет подключениями к базе данных.
+ * <p>
+ * Предоставляет методы для получения соединения с базой данных, используя настройки из AppConfig.
+ * </p>
+ *
+ * author
+ *      Ekaterina Ishchuk
+ */
 public class DatabaseConnectionManager {
 
     private final String url;
@@ -11,7 +20,9 @@ public class DatabaseConnectionManager {
     private final String password;
     private final String driver;
 
-    // Конструктор по умолчанию
+    /**
+     * Конструктор по умолчанию, использующий настройки из AppConfig.
+     */
     public DatabaseConnectionManager() {
         AppConfig config = new AppConfig();
         this.url = config.getDbUrl();
@@ -20,7 +31,14 @@ public class DatabaseConnectionManager {
         this.driver = config.getDbDriver();
     }
 
-    // Конструктор для тестов
+    /**
+     * Конструктор для тестирования с пользовательскими параметрами.
+     *
+     * @param url      URL базы данных
+     * @param username имя пользователя
+     * @param password пароль
+     * @param driver   драйвер базы данных
+     */
     public DatabaseConnectionManager(String url, String username, String password, String driver) {
         this.url = url;
         this.username = username;
@@ -28,6 +46,12 @@ public class DatabaseConnectionManager {
         this.driver = driver;
     }
 
+    /**
+     * Получает подключение к базе данных.
+     *
+     * @return объект {@link Connection}
+     * @throws RuntimeException если не удалось установить соединение
+     */
     public Connection getConnection() {
         try {
             Class.forName(driver);

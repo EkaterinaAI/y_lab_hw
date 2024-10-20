@@ -4,41 +4,44 @@ import liquibase.Liquibase;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
-import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import org.junit.jupiter.api.*;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import ru.habittracker.BaseHabitTest;
 import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.Habit;
 import ru.habittracker.model.User;
+import ru.habittracker.repository.interfaces.IHabitRepository;
+import ru.habittracker.repository.interfaces.IUserRepository;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@Testcontainers
-public class HabitRepositoryTest {
-
-    @Container
-    public static PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:latest")
-            .withDatabaseName("testdb")
-            .withUsername("postgres")
-            .withPassword("password")
-            .withInitScript("init.sql");
+/**
+ * Тестовый класс для {@link ru.habittracker.repository.HabitRepository}.
+ * <p>
+ * Проверяет корректность операций с привычками в базе данных.
+ * </p>
+ *
+ * <p><strong>Автор:</strong> Ekaterina Ishchuk</p>
+ */
+public class HabitRepositoryTest extends BaseHabitTest {
 
     private static DatabaseConnectionManager dbManager;
-    private static HabitRepository habitRepository;
-    private static UserRepository userRepository;
+    private static IHabitRepository habitRepository;
+    private static IUserRepository userRepository;
     private static User testUser;
 
+    /**
+     * Инициализация ресурсов перед всеми тестами.
+     *
+     * @throws Exception возможное исключение при инициализации
+     */
     @BeforeAll
-    public static void globalSetUp() throws SQLException, LiquibaseException {
+    public static void globalSetUp() throws Exception {
         dbManager = new DatabaseConnectionManager(
                 postgresContainer.getJdbcUrl(),
                 postgresContainer.getUsername(),
@@ -67,21 +70,29 @@ public class HabitRepositoryTest {
         userRepository = new UserRepository(dbManager);
     }
 
+    /**
+     * Подготовка тестовых данных перед каждым тестом.
+     *
+     * @throws Exception возможное исключение при подготовке данных
+     */
     @BeforeEach
-    public void setUp() throws SQLException {
-        // Clean up and create a test user before each test
+    public void setUp() throws Exception {
         try (Connection connection = dbManager.getConnection()) {
             connection.createStatement().execute(
-                    "TRUNCATE TABLE service.habit_records, service.habits, service.users RESTART IDENTITY CASCADE;"
+                    "TRUNCATE TABLE service.habits, service.users RESTART IDENTITY CASCADE;"
             );
         }
 
+        // Создание тестового пользователя
         User user = new User(0, "user@example.com", "password123", "Test User");
         Optional<User> savedUserOptional = userRepository.save(user);
-        assertTrue(savedUserOptional.isPresent(), "User should be saved successfully.");
+        assertTrue(savedUserOptional.isPresent(), "User should be successfully saved.");
         testUser = savedUserOptional.get();
     }
 
+    /**
+     * Тест сохранения привычки.
+     */
     @Test
     public void testSaveHabit() {
         Habit habit = new Habit(0, "Exercise", "Morning exercise", 1, testUser.getId(), LocalDate.now());
@@ -92,6 +103,9 @@ public class HabitRepositoryTest {
         assertEquals("Exercise", savedHabit.getTitle(), "Titles should match.");
     }
 
+    /**
+     * Тест поиска привычки по ID и ID пользователя.
+     */
     @Test
     public void testFindByIdAndUserId() {
         Habit habit = new Habit(0, "Exercise", "Morning exercise", 1, testUser.getId(), LocalDate.now());
@@ -102,6 +116,9 @@ public class HabitRepositoryTest {
         assertEquals(savedHabit.getId(), foundHabit.getId(), "Habit IDs should match.");
     }
 
+    /**
+     * Тест поиска всех привычек пользователя.
+     */
     @Test
     public void testFindByUserId() {
         Habit habit1 = new Habit(0, "Exercise", "Morning exercise", 1, testUser.getId(), LocalDate.now());
@@ -113,6 +130,9 @@ public class HabitRepositoryTest {
         assertEquals(2, habits.size(), "There should be 2 habits for the user.");
     }
 
+    /**
+     * Тест обновления привычки.
+     */
     @Test
     public void testUpdateHabit() {
         Habit habit = new Habit(0, "Exercise", "Morning exercise", 1, testUser.getId(), LocalDate.now());
@@ -131,6 +151,9 @@ public class HabitRepositoryTest {
         assertEquals(2, updatedHabit.getFrequency(), "Frequency should be updated.");
     }
 
+    /**
+     * Тест удаления привычки по ID и ID пользователя.
+     */
     @Test
     public void testDeleteByIdAndUserId() {
         Habit habit = new Habit(0, "Exercise", "Morning exercise", 1, testUser.getId(), LocalDate.now());

@@ -2,20 +2,40 @@ package ru.habittracker.repository;
 
 import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.User;
+import ru.habittracker.repository.interfaces.IUserRepository;
 
 import java.sql.*;
 import java.util.Optional;
 
-public class UserRepository {
+/**
+ * Репозиторий для работы с таблицей "users" в базе данных.
+ * <p>
+ * Предоставляет методы для сохранения, обновления, удаления и поиска пользователей.
+ * </p>
+ *
+ * author
+ *     Ekaterina Ishchuk
+ */
+public class UserRepository implements IUserRepository {
 
     private final DatabaseConnectionManager dbManager;
 
-    // Конструктор для передачи DatabaseConnectionManager
+    /**
+     * Конструктор репозитория пользователей.
+     *
+     * @param dbManager менеджер подключения к базе данных
+     */
     public UserRepository(DatabaseConnectionManager dbManager) {
         this.dbManager = dbManager;
     }
 
-    // Сохранение пользователя
+    /**
+     * Сохраняет нового пользователя в базе данных.
+     *
+     * @param user объект пользователя для сохранения
+     * @return сохранённый объект пользователя с установленным ID
+     */
+    @Override
     public Optional<User> save(User user) {
         String sql = "INSERT INTO users (id, email, password, name) VALUES (nextval('user_seq'), ?, ?, ?) RETURNING id";
         try (Connection conn = dbManager.getConnection();
@@ -38,7 +58,13 @@ public class UserRepository {
         return Optional.empty();
     }
 
-    // Поиск пользователя по email
+    /**
+     * Находит пользователя по email.
+     *
+     * @param email email пользователя
+     * @return объект пользователя или пустой Optional, если не найдено
+     */
+    @Override
     public Optional<User> findByEmail(String email) {
         String sql = "SELECT id, email, password, name FROM users WHERE email = ?";
         try (Connection conn = dbManager.getConnection();
@@ -63,7 +89,13 @@ public class UserRepository {
         return Optional.empty();
     }
 
-    // Поиск пользователя по id
+    /**
+     * Находит пользователя по ID.
+     *
+     * @param userId ID пользователя
+     * @return объект пользователя или пустой Optional, если не найдено
+     */
+    @Override
     public Optional<User> findById(int userId) {
         String sql = "SELECT id, email, password, name FROM users WHERE id = ?";
         try (Connection conn = dbManager.getConnection();
@@ -88,7 +120,13 @@ public class UserRepository {
         return Optional.empty();
     }
 
-    // Обновление данных пользователя
+    /**
+     * Обновляет информацию о пользователе.
+     *
+     * @param user объект пользователя с обновлёнными данными
+     * @return true, если обновление прошло успешно
+     */
+    @Override
     public boolean update(User user) {
         String sql = "UPDATE users SET email = ?, password = ?, name = ? WHERE id = ?";
         try (Connection conn = dbManager.getConnection();
@@ -108,7 +146,13 @@ public class UserRepository {
         return false;
     }
 
-    // Удаление пользователя по id
+    /**
+     * Удаляет пользователя по ID.
+     *
+     * @param userId ID пользователя
+     * @return true, если удаление прошло успешно
+     */
+    @Override
     public boolean delete(int userId) {
         String sql = "DELETE FROM users WHERE id = ?";
         try (Connection conn = dbManager.getConnection();

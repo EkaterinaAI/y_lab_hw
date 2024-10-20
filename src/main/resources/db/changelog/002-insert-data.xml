@@ -37,14 +37,14 @@
         <insert tableName="habits" schemaName="service">
             <column name="title" value="Бег"/>
             <column name="description" value="Бегать 5 км три раза в неделю"/>
-            <column name="frequency" valueNumeric="3"/>
+            <column name="frequency" valueNumeric="1"/>
             <column name="user_id" valueNumeric="2"/>
             <column name="creation_date" valueDate="2024-02-15"/>
         </insert>
         <insert tableName="habits" schemaName="service">
             <column name="title" value="Медитация"/>
             <column name="description" value="Медитировать по 10 минут ежедневно"/>
-            <column name="frequency" valueNumeric="7"/>
+            <column name="frequency" valueNumeric="2"/>
             <column name="user_id" valueNumeric="3"/>
             <column name="creation_date" valueDate="2024-03-10"/>
         </insert>

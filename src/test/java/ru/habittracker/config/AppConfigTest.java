@@ -4,8 +4,19 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Тестовый класс для {@link ru.habittracker.config.AppConfig}.
+ * <p>
+ * Проверяет корректность загрузки конфигурационных свойств приложения.
+ * </p>
+ *
+ * <p><strong>Автор:</strong> Ekaterina Ishchuk</p>
+ */
 public class AppConfigTest {
 
+    /**
+     * Тест загрузки всех свойств конфигурации.
+     */
     @Test
     public void testLoadProperties() {
         AppConfig appConfig = new AppConfig();

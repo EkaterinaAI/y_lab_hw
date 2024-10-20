@@ -6,6 +6,12 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 
+/**
+ * Класс, представляющий запись выполнения привычки.
+ *
+ * author
+ *      Ekaterina Ishchuk
+ */
 @Getter
 @Setter
 @AllArgsConstructor
@@ -15,6 +21,13 @@ public class HabitRecord {
     private LocalDate date;
     private boolean completed;
 
+    /**
+     * Конструктор без ID для создания новых записей.
+     *
+     * @param habitId   ID привычки
+     * @param date      дата выполнения
+     * @param completed статус выполнения
+     */
     public HabitRecord(int habitId, LocalDate date, boolean completed) {
         this.habitId = habitId;
         this.date = date;

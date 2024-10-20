@@ -4,45 +4,48 @@ import liquibase.Liquibase;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
-import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import org.junit.jupiter.api.*;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import ru.habittracker.BaseHabitTest;
 import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.Habit;
 import ru.habittracker.model.HabitRecord;
 import ru.habittracker.model.User;
+import ru.habittracker.repository.interfaces.IHabitRecordRepository;
+import ru.habittracker.repository.interfaces.IHabitRepository;
+import ru.habittracker.repository.interfaces.IUserRepository;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@Testcontainers
-public class HabitRecordRepositoryTest {
-
-    @Container
-    public static PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:latest")
-            .withDatabaseName("testdb")
-            .withUsername("postgres")
-            .withPassword("password")
-            .withInitScript("init.sql");
+/**
+ * Тестовый класс для {@link ru.habittracker.repository.HabitRecordRepository}.
+ * <p>
+ * Проверяет корректность операций с записями о выполнении привычек.
+ * </p>
+ *
+ * <p><strong>Автор:</strong> Ekaterina Ishchuk</p>
+ */
+public class HabitRecordRepositoryTest extends BaseHabitTest {
 
     private static DatabaseConnectionManager dbManager;
-    private static HabitRecordRepository habitRecordRepository;
-    private static HabitRepository habitRepository;
-    private static UserRepository userRepository;
+    private static IHabitRecordRepository habitRecordRepository;
+    private static IHabitRepository habitRepository;
+    private static IUserRepository userRepository;
     private static User testUser;
     private static Habit testHabit;
 
+    /**
+     * Инициализация ресурсов перед всеми тестами.
+     *
+     * @throws Exception возможное исключение при инициализации
+     */
     @BeforeAll
-    public static void globalSetUp() throws SQLException, LiquibaseException {
-        // Инициализация DatabaseConnectionManager
+    public static void globalSetUp() throws Exception {
         dbManager = new DatabaseConnectionManager(
                 postgresContainer.getJdbcUrl(),
                 postgresContainer.getUsername(),
@@ -50,7 +53,6 @@ public class HabitRecordRepositoryTest {
                 postgresContainer.getDriverClassName()
         );
 
-        // Настройка базы данных и применение Liquibase changelog
         try (Connection connection = dbManager.getConnection()) {
             connection.createStatement().execute("SET search_path TO service");
 
@@ -68,15 +70,18 @@ public class HabitRecordRepositoryTest {
             liquibase.update("");
         }
 
-        // Инициализация репозиториев
         habitRecordRepository = new HabitRecordRepository(dbManager);
         habitRepository = new HabitRepository(dbManager);
         userRepository = new UserRepository(dbManager);
     }
 
+    /**
+     * Подготовка тестовых данных перед каждым тестом.
+     *
+     * @throws Exception возможное исключение при подготовке данных
+     */
     @BeforeEach
-    public void setUp() throws SQLException {
-        // Очистка базы данных перед каждым тестом и создание тестового пользователя и привычки
+    public void setUp() throws Exception {
         try (Connection connection = dbManager.getConnection()) {
             connection.createStatement().execute(
                     "TRUNCATE TABLE service.habit_records, service.habits, service.users RESTART IDENTITY CASCADE;"
@@ -86,27 +91,33 @@ public class HabitRecordRepositoryTest {
         // Создание тестового пользователя
         User user = new User(0, "user@example.com", "password123", "Test User");
         Optional<User> savedUserOptional = userRepository.save(user);
-        assertTrue(savedUserOptional.isPresent(), "Пользователь должен быть успешно сохранен.");
+        assertTrue(savedUserOptional.isPresent(), "User should be successfully saved.");
         testUser = savedUserOptional.get();
 
         // Создание тестовой привычки
         Habit habit = new Habit(0, "Exercise", "Morning exercise", 1, testUser.getId(), LocalDate.now());
         testHabit = habitRepository.save(habit);
-        assertNotNull(testHabit, "Привычка должна быть успешно сохранена.");
+        assertNotNull(testHabit, "Habit should be successfully saved.");
     }
 
+    /**
+     * Тест сохранения записи о выполнении привычки.
+     */
     @Test
     public void testSaveHabitRecord() {
         HabitRecord record = new HabitRecord(testHabit.getId(), LocalDate.now(), true);
         Optional<HabitRecord> savedRecordOptional = habitRecordRepository.save(record);
 
-        assertTrue(savedRecordOptional.isPresent(), "Запись привычки должна быть успешно сохранена.");
+        assertTrue(savedRecordOptional.isPresent(), "Habit record should be successfully saved.");
         HabitRecord savedRecord = savedRecordOptional.get();
-        assertEquals(testHabit.getId(), savedRecord.getHabitId(), "ID привычки должен совпадать.");
-        assertEquals(LocalDate.now(), savedRecord.getDate(), "Дата должна совпадать.");
-        assertTrue(savedRecord.isCompleted(), "Поле 'completed' должно быть true.");
+        assertEquals(testHabit.getId(), savedRecord.getHabitId(), "Habit ID should match.");
+        assertEquals(LocalDate.now(), savedRecord.getDate(), "Date should match.");
+        assertTrue(savedRecord.isCompleted(), "'completed' field should be true.");
     }
 
+    /**
+     * Тест поиска записей по ID привычки.
+     */
     @Test
     public void testFindByHabitId() {
         HabitRecord record1 = new HabitRecord(testHabit.getId(), LocalDate.now(), true);
@@ -115,32 +126,54 @@ public class HabitRecordRepositoryTest {
         habitRecordRepository.save(record2);
 
         List<HabitRecord> records = habitRecordRepository.findByHabitId(testHabit.getId());
-        assertEquals(2, records.size(), "Должно быть 2 записи для данной привычки.");
+        assertEquals(2, records.size(), "There should be 2 records for the given habit.");
     }
 
+    /**
+     * Тест поиска записей по ID пользователя и дате.
+     */
     @Test
     public void testFindByUserIdAndDate() {
         HabitRecord record = new HabitRecord(testHabit.getId(), LocalDate.now(), true);
         habitRecordRepository.save(record);
 
         List<HabitRecord> records = habitRecordRepository.findByUserIdAndDate(testUser.getId(), LocalDate.now());
-        assertEquals(1, records.size(), "Должна быть 1 запись для пользователя на заданную дату.");
+        assertEquals(1, records.size(), "There should be 1 record for the user on the given date.");
     }
 
-    /*@Test
+    /**
+     * Тест поиска записи по её ID.
+     */
+    @Test
+    public void testFindById() {
+        HabitRecord record = new HabitRecord(testHabit.getId(), LocalDate.now(), true);
+        Optional<HabitRecord> savedRecordOptional = habitRecordRepository.save(record);
+        assertTrue(savedRecordOptional.isPresent(), "Record should be saved.");
+
+        int recordId = savedRecordOptional.get().getId();
+
+        Optional<HabitRecord> foundRecordOptional = habitRecordRepository.findById(recordId);
+        assertTrue(foundRecordOptional.isPresent(), "Record should be found by ID.");
+        HabitRecord foundRecord = foundRecordOptional.get();
+        assertEquals(recordId, foundRecord.getId(), "Record IDs should match.");
+    }
+
+    /**
+     * Тест удаления записи о выполнении привычки.
+     */
+    @Test
     public void testDeleteHabitRecord() {
         HabitRecord record = new HabitRecord(testHabit.getId(), LocalDate.now(), true);
         Optional<HabitRecord> savedRecordOptional = habitRecordRepository.save(record);
-        assertTrue(savedRecordOptional.isPresent(), "Запись привычки должна быть успешно сохранена.");
+        assertTrue(savedRecordOptional.isPresent(), "Habit record should be successfully saved.");
 
-        HabitRecord savedRecord = savedRecordOptional.get();
+        int recordId = savedRecordOptional.get().getId();
 
-        boolean isDeleted = habitRecordRepository.deleteByHabitIdAndDate(savedRecord.getHabitId(), savedRecord.getDate());
-        assertTrue(isDeleted, "Запись привычки должна быть успешно удалена.");
+        boolean isDeleted = habitRecordRepository.delete(recordId);
+        assertTrue(isDeleted, "Habit record should be successfully deleted.");
 
-        // Проверяем, что запись действительно удалена
-        List<HabitRecord> records = habitRecordRepository.findByHabitId(savedRecord.getHabitId());
-        boolean recordExists = records.stream().anyMatch(r -> r.getDate().equals(savedRecord.getDate()));
-        assertFalse(recordExists, "Запись привычки не должна существовать после удаления.");
-    }*/
+        // Проверка отсутствия записи после удаления
+        Optional<HabitRecord> foundRecord = habitRecordRepository.findById(recordId);
+        assertFalse(foundRecord.isPresent(), "Record should not exist after deletion.");
+    }
 }
