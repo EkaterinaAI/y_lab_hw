@@ -2,9 +2,9 @@ package ru.habittracker.controller;
 
 import ru.habittracker.model.Habit;
 import ru.habittracker.model.User;
-import ru.habittracker.service.interfaces.IHabitService;
-import ru.habittracker.service.interfaces.IHabitTrackerService;
-import ru.habittracker.service.interfaces.IUserService;
+import ru.habittracker.service.IHabitService;
+import ru.habittracker.service.IHabitTrackerService;
+import ru.habittracker.service.IUserService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -60,58 +60,31 @@ public class HabitTrackerController {
                 }
 
                 switch (command) {
-                    case 1:
-                        handleRegister(scanner);
-                        break;
-                    case 2:
-                        handleLogin(scanner);
-                        break;
-                    case 3:
-                        handleUpdateUser(scanner);
-                        break;
-                    case 4:
-                        handleDeleteUser(scanner);
-                        break;
-                    case 5:
-                        handleCreateHabit(scanner);
-                        break;
-                    case 6:
-                        handleViewHabits();
-                        break;
-                    case 7:
-                        handleViewHabitsByDate(scanner);
-                        break;
-                    case 8:
-                        handleViewHabitsByStatus(scanner);
-                        break;
-                    case 9:
-                        handleUpdateHabit(scanner);
-                        break;
-                    case 10:
-                        handleDeleteHabit(scanner);
-                        break;
-                    case 11:
-                        handleMarkComplete(scanner);
-                        break;
-                    case 12:
-                        handleViewHabitHistory(scanner);
-                        break;
-                    case 13:
-                        handleViewHabitStatistics(scanner);
-                        break;
-                    case 14:
-                        handleGenerateReport();
-                        break;
-                    case 15:
+                    case 1 -> handleRegister(scanner);
+                    case 2 -> handleLogin(scanner);
+                    case 3 -> handleUpdateUser(scanner);
+                    case 4 -> handleDeleteUser(scanner);
+                    case 5 -> handleCreateHabit(scanner);
+                    case 6 -> handleViewHabits();
+                    case 7 -> handleViewHabitsByDate(scanner);
+                    case 8 -> handleViewHabitsByStatus(scanner);
+                    case 9 -> handleUpdateHabit(scanner);
+                    case 10 -> handleDeleteHabit(scanner);
+                    case 11 -> handleMarkComplete(scanner);
+                    case 12 -> handleViewHabitHistory(scanner);
+                    case 13 -> handleViewHabitStatistics(scanner);
+                    case 14 -> handleGenerateReport();
+                    case 15 -> {
                         loggedInUser = null;
                         System.out.println("Вы вышли из системы.");
-                        break;
-                    case 16:
+                    }
+                    case 16 -> {
                         System.out.println("До свидания!");
-                        return;
-                    default:
-                        System.out.println("Неверная команда.");
+                        return;  // Завершение метода, если это необходимо
+                    }
+                    default -> System.out.println("Неверная команда.");
                 }
+
             }
         }
     }

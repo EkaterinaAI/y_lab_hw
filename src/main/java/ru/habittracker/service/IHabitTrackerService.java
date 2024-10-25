@@ -1,4 +1,4 @@
-package ru.habittracker.service.interfaces;
+package ru.habittracker.service;
 
 import ru.habittracker.model.Habit;
 

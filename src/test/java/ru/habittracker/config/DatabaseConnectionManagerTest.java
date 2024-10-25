@@ -1,5 +1,6 @@
 package ru.habittracker.config;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import ru.habittracker.BaseHabitTest;
 
@@ -22,6 +23,7 @@ public class DatabaseConnectionManagerTest extends BaseHabitTest {
      * Тест успешного получения соединения с базой данных.
      */
     @Test
+    @DisplayName("Проверка успешного получения соединения с базой данных")
     public void testGetConnection() {
         DatabaseConnectionManager dbManager = new DatabaseConnectionManager(
                 postgresContainer.getJdbcUrl(),

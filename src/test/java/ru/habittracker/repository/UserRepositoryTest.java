@@ -9,7 +9,7 @@ import org.junit.jupiter.api.*;
 import ru.habittracker.BaseHabitTest;
 import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.User;
-import ru.habittracker.repository.interfaces.IUserRepository;
+import ru.habittracker.repository.impl.UserRepository;
 
 import java.sql.Connection;
 import java.util.Optional;
@@ -17,7 +17,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Тестовый класс для {@link ru.habittracker.repository.UserRepository}.
+ * Тестовый класс для {@link UserRepository}.
  * <p>
  * Проверяет корректность операций с пользователями в базе данных.
  * </p>
@@ -81,6 +81,7 @@ public class UserRepositoryTest extends BaseHabitTest {
      * Тест сохранения пользователя.
      */
     @Test
+    @DisplayName("Тест сохранения пользователя")
     public void testSaveUser() {
         User user = new User(0, "user@example.com", "password123", "Test User");
         Optional<User> savedUserOptional = userRepository.save(user);
@@ -95,6 +96,7 @@ public class UserRepositoryTest extends BaseHabitTest {
      * Тест поиска пользователя по email.
      */
     @Test
+    @DisplayName("Тест поиска пользователя по email")
     public void testFindByEmail() {
         User user = new User(0, "user@example.com", "password123", "Test User");
         userRepository.save(user);
@@ -109,6 +111,7 @@ public class UserRepositoryTest extends BaseHabitTest {
      * Тест поиска пользователя по ID.
      */
     @Test
+    @DisplayName("Тест поиска пользователя по ID")
     public void testFindById() {
         User user = new User(0, "user@example.com", "password123", "Test User");
         Optional<User> savedUserOptional = userRepository.save(user);
@@ -126,6 +129,7 @@ public class UserRepositoryTest extends BaseHabitTest {
      * Тест обновления информации о пользователе.
      */
     @Test
+    @DisplayName("Тест обновления информации о пользователе")
     public void testUpdateUser() {
         User user = new User(0, "user@example.com", "password123", "Test User");
         Optional<User> savedUserOptional = userRepository.save(user);
@@ -149,6 +153,7 @@ public class UserRepositoryTest extends BaseHabitTest {
      * Тест удаления пользователя.
      */
     @Test
+    @DisplayName("Тест удаления пользователя")
     public void testDeleteUser() {
         User user = new User(0, "user@example.com", "password123", "Test User");
         Optional<User> savedUserOptional = userRepository.save(user);

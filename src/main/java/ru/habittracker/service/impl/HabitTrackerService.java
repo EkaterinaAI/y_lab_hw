@@ -1,11 +1,11 @@
-package ru.habittracker.service;
+package ru.habittracker.service.impl;
 
 import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.Habit;
 import ru.habittracker.model.HabitRecord;
-import ru.habittracker.repository.HabitRecordRepository;
-import ru.habittracker.repository.interfaces.IHabitRecordRepository;
-import ru.habittracker.service.interfaces.IHabitTrackerService;
+import ru.habittracker.repository.impl.HabitRecordRepository;
+import ru.habittracker.repository.IHabitRecordRepository;
+import ru.habittracker.service.IHabitTrackerService;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -41,13 +41,6 @@ public class HabitTrackerService implements IHabitTrackerService {
         this.habitRecordRepository = new HabitRecordRepository(dbManager);
     }
 
-    /**
-     * Отмечает выполнение привычки в указанную дату.
-     *
-     * @param userId  ID пользователя
-     * @param habitId ID привычки
-     * @param date    дата выполнения
-     */
     @Override
     public void markHabitCompletion(int userId, int habitId, LocalDate date) {
         HabitRecord record = new HabitRecord(habitId, date, true);
@@ -56,13 +49,6 @@ public class HabitTrackerService implements IHabitTrackerService {
         System.out.println("Привычка отмечена как выполненная за " + date + ".");
     }
 
-    /**
-     * Получает историю выполнения привычки.
-     *
-     * @param userId  ID пользователя
-     * @param habitId ID привычки
-     * @return строка с историей выполнения
-     */
     @Override
     public String getHabitHistory(int userId, int habitId) {
         List<HabitRecord> records = habitRecordRepository.findByHabitId(habitId);
@@ -75,13 +61,6 @@ public class HabitTrackerService implements IHabitTrackerService {
         return history.isEmpty() ? "История отсутствует." : history;
     }
 
-    /**
-     * Вычисляет текущую серию выполнения привычки.
-     *
-     * @param userId  ID пользователя
-     * @param habitId ID привычки
-     * @return количество дней текущей серии
-     */
     @Override
     public int calculateStreak(int userId, int habitId) {
         List<HabitRecord> records = habitRecordRepository.findByHabitId(habitId)
@@ -104,13 +83,6 @@ public class HabitTrackerService implements IHabitTrackerService {
         return streak;
     }
 
-    /**
-     * Вычисляет процент успешного выполнения привычки за последний месяц.
-     *
-     * @param userId  ID пользователя
-     * @param habitId ID привычки
-     * @return процент успешного выполнения
-     */
     @Override
     public double calculateSuccessRate(int userId, int habitId) {
         List<HabitRecord> records = habitRecordRepository.findByHabitId(habitId);
@@ -124,13 +96,6 @@ public class HabitTrackerService implements IHabitTrackerService {
         return (double) completedDays / totalDays * 100;
     }
 
-    /**
-     * Генерирует отчёт о прогрессе по всем привычкам пользователя.
-     *
-     * @param userId ID пользователя
-     * @param habits список привычек
-     * @return строка с отчётом о прогрессе
-     */
     @Override
     public String generateProgressReport(int userId, List<Habit> habits) {
         StringBuilder report = new StringBuilder("Отчет о прогрессе:\n");

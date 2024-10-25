@@ -11,9 +11,9 @@ import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.Habit;
 import ru.habittracker.model.HabitRecord;
 import ru.habittracker.model.User;
-import ru.habittracker.repository.interfaces.IHabitRecordRepository;
-import ru.habittracker.repository.interfaces.IHabitRepository;
-import ru.habittracker.repository.interfaces.IUserRepository;
+import ru.habittracker.repository.impl.HabitRecordRepository;
+import ru.habittracker.repository.impl.HabitRepository;
+import ru.habittracker.repository.impl.UserRepository;
 
 import java.sql.Connection;
 import java.time.LocalDate;
@@ -23,7 +23,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Тестовый класс для {@link ru.habittracker.repository.HabitRecordRepository}.
+ * Тестовый класс для {@link HabitRecordRepository}.
  * <p>
  * Проверяет корректность операций с записями о выполнении привычек.
  * </p>
@@ -104,6 +104,7 @@ public class HabitRecordRepositoryTest extends BaseHabitTest {
      * Тест сохранения записи о выполнении привычки.
      */
     @Test
+    @DisplayName("Тест сохранения записи о выполнении привычки")
     public void testSaveHabitRecord() {
         HabitRecord record = new HabitRecord(testHabit.getId(), LocalDate.now(), true);
         Optional<HabitRecord> savedRecordOptional = habitRecordRepository.save(record);
@@ -119,6 +120,7 @@ public class HabitRecordRepositoryTest extends BaseHabitTest {
      * Тест поиска записей по ID привычки.
      */
     @Test
+    @DisplayName("Тест поиска записей по ID привычки")
     public void testFindByHabitId() {
         HabitRecord record1 = new HabitRecord(testHabit.getId(), LocalDate.now(), true);
         HabitRecord record2 = new HabitRecord(testHabit.getId(), LocalDate.now().minusDays(1), false);
@@ -133,6 +135,7 @@ public class HabitRecordRepositoryTest extends BaseHabitTest {
      * Тест поиска записей по ID пользователя и дате.
      */
     @Test
+    @DisplayName("Тест поиска записей по ID пользователя и дате")
     public void testFindByUserIdAndDate() {
         HabitRecord record = new HabitRecord(testHabit.getId(), LocalDate.now(), true);
         habitRecordRepository.save(record);
@@ -145,6 +148,7 @@ public class HabitRecordRepositoryTest extends BaseHabitTest {
      * Тест поиска записи по её ID.
      */
     @Test
+    @DisplayName("Тест поиска записи по её ID")
     public void testFindById() {
         HabitRecord record = new HabitRecord(testHabit.getId(), LocalDate.now(), true);
         Optional<HabitRecord> savedRecordOptional = habitRecordRepository.save(record);
@@ -162,6 +166,7 @@ public class HabitRecordRepositoryTest extends BaseHabitTest {
      * Тест удаления записи о выполнении привычки.
      */
     @Test
+    @DisplayName("Тест удаления записи о выполнении привычки")
     public void testDeleteHabitRecord() {
         HabitRecord record = new HabitRecord(testHabit.getId(), LocalDate.now(), true);
         Optional<HabitRecord> savedRecordOptional = habitRecordRepository.save(record);

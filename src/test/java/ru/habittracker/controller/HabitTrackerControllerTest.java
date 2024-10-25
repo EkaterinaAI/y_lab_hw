@@ -3,18 +3,21 @@ package ru.habittracker.controller;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import ru.habittracker.model.Habit;
 import ru.habittracker.model.User;
-import ru.habittracker.service.interfaces.IHabitService;
-import ru.habittracker.service.interfaces.IHabitTrackerService;
-import ru.habittracker.service.interfaces.IUserService;
+import ru.habittracker.service.IHabitService;
+import ru.habittracker.service.IHabitTrackerService;
+import ru.habittracker.service.IUserService;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -45,11 +48,20 @@ class HabitTrackerControllerTest {
 
     private InputStream sysInBackup;
 
+    private PrintStream originalOut;
+    private PrintStream originalErr;
+
     /**
      * Инициализация моков и сохранение System.in перед каждым тестом.
      */
     @BeforeEach
-    void setUp() {
+    void setUp() throws UnsupportedEncodingException {
+        originalOut = System.out;
+        originalErr = System.err;
+
+        System.setOut(new PrintStream(originalOut, true, "UTF-8"));
+        System.setErr(new PrintStream(originalErr, true, "UTF-8"));
+
         MockitoAnnotations.openMocks(this);
         sysInBackup = System.in;
 
@@ -69,6 +81,7 @@ class HabitTrackerControllerTest {
      * Тест успешной регистрации пользователя.
      */
     @Test
+    @DisplayName("Тест успешной регистрации пользователя")
     void handleRegisterTest() {
         String simulatedInput = "user@example.com\npassword123\nJohn Doe\n";
         System.setIn(new ByteArrayInputStream(simulatedInput.getBytes()));
@@ -86,6 +99,7 @@ class HabitTrackerControllerTest {
      * Тест неудачной регистрации (email уже используется).
      */
     @Test
+    @DisplayName("Тест неудачной регистрации пользователя (email уже используется)")
     void handleRegisterFailureTest() {
         String simulatedInput = "user@example.com\npassword123\nJohn Doe\n";
         System.setIn(new ByteArrayInputStream(simulatedInput.getBytes()));
@@ -102,6 +116,7 @@ class HabitTrackerControllerTest {
      * Тест успешного входа в систему.
      */
     @Test
+    @DisplayName("Тест успешного входа в систему")
     void handleLoginTest() {
         String simulatedInput = "user@example.com\npassword123\n";
         System.setIn(new ByteArrayInputStream(simulatedInput.getBytes()));
@@ -119,6 +134,7 @@ class HabitTrackerControllerTest {
      * Тест неудачного входа в систему (неверный пароль).
      */
     @Test
+    @DisplayName("Тест неудачного входа в систему (неверный пароль)")
     void handleLoginFailureTest() {
         String simulatedInput = "user@example.com\nwrongpassword\n";
         System.setIn(new ByteArrayInputStream(simulatedInput.getBytes()));
@@ -135,6 +151,7 @@ class HabitTrackerControllerTest {
      * Тест успешного обновления профиля пользователя.
      */
     @Test
+    @DisplayName("Тест успешного обновления профиля пользователя")
     void handleUpdateUserTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = "newemail@example.com\nnewpassword\nNew Name\n";
@@ -151,6 +168,7 @@ class HabitTrackerControllerTest {
      * Тест обновления профиля без входа в систему.
      */
     @Test
+    @DisplayName("Тест обновления профиля без входа в систему")
     void handleUpdateUserNotLoggedInTest() {
         String simulatedInput = "newemail@example.com\nnewpassword\nNew Name\n";
         System.setIn(new ByteArrayInputStream(simulatedInput.getBytes()));
@@ -164,6 +182,7 @@ class HabitTrackerControllerTest {
      * Тест неудачного обновления профиля (email уже используется).
      */
     @Test
+    @DisplayName("Тест неудачного обновления профиля (email уже используется)")
     void handleUpdateUserEmailAlreadyInUseTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = "existing@example.com\nnewpassword\nNew Name\n";
@@ -180,6 +199,7 @@ class HabitTrackerControllerTest {
      * Тест успешного удаления пользователя.
      */
     @Test
+    @DisplayName("Тест успешного удаления пользователя")
     void handleDeleteUserTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = "yes\n";
@@ -197,6 +217,7 @@ class HabitTrackerControllerTest {
      * Тест удаления пользователя без входа в систему.
      */
     @Test
+    @DisplayName("Тест удаления пользователя без входа в систему")
     void handleDeleteUserNotLoggedInTest() {
         String simulatedInput = "yes\n";
         System.setIn(new ByteArrayInputStream(simulatedInput.getBytes()));
@@ -210,6 +231,7 @@ class HabitTrackerControllerTest {
      * Тест отмены удаления пользователя.
      */
     @Test
+    @DisplayName("Тест отмены удаления пользователя")
     void handleDeleteUserCancellationTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = "no\n";
@@ -225,6 +247,7 @@ class HabitTrackerControllerTest {
      * Тест успешного создания привычки.
      */
     @Test
+    @DisplayName("Тест успешного создания привычки")
     void handleCreateHabitTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = "Читать книгу\nЧитать 30 страниц ежедневно\n1\n";
@@ -242,6 +265,7 @@ class HabitTrackerControllerTest {
      * Тест создания привычки без входа в систему.
      */
     @Test
+    @DisplayName("Тест создания привычки без входа в систему")
     void handleCreateHabitNotLoggedInTest() {
         String simulatedInput = "Читать книгу\nЧитать 30 страниц ежедневно\n1\n";
         System.setIn(new ByteArrayInputStream(simulatedInput.getBytes()));
@@ -255,6 +279,7 @@ class HabitTrackerControllerTest {
      * Тест создания привычки с некорректной частотой.
      */
     @Test
+    @DisplayName("Тест создания привычки с некорректной частотой")
     void handleCreateHabitInvalidFrequencyTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = "Читать книгу\nЧитать 30 страниц ежедневно\ninvalid\n";
@@ -269,6 +294,7 @@ class HabitTrackerControllerTest {
      * Тест просмотра привычек пользователя.
      */
     @Test
+    @DisplayName("Тест просмотра привычек пользователя")
     void handleViewHabitsTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         List<Habit> mockHabits = Arrays.asList(
@@ -286,6 +312,7 @@ class HabitTrackerControllerTest {
      * Тест просмотра привычек без входа в систему.
      */
     @Test
+    @DisplayName("Тест просмотра привычек без входа в систему")
     void handleViewHabitsNotLoggedInTest() {
         habitTrackerController.handleViewHabits();
 
@@ -296,6 +323,7 @@ class HabitTrackerControllerTest {
      * Тест просмотра привычек по дате создания.
      */
     @Test
+    @DisplayName("Тест просмотра привычек по дате создания")
     void handleViewHabitsByDateTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = LocalDate.now().toString() + "\n";
@@ -315,6 +343,7 @@ class HabitTrackerControllerTest {
      * Тест просмотра привычек по дате с некорректным вводом.
      */
     @Test
+    @DisplayName("Тест просмотра привычек по дате с некорректным вводом")
     void handleViewHabitsByDateInvalidDateTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = "invalid-date\n";
@@ -329,6 +358,7 @@ class HabitTrackerControllerTest {
      * Тест просмотра привычек по частоте.
      */
     @Test
+    @DisplayName("Тест просмотра привычек по частоте")
     void handleViewHabitsByStatusTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = "1\n";
@@ -348,6 +378,7 @@ class HabitTrackerControllerTest {
      * Тест просмотра привычек по частоте с некорректным вводом.
      */
     @Test
+    @DisplayName("Тест просмотра привычек по частоте с некорректным вводом")
     void handleViewHabitsByStatusInvalidStatusTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = "invalid\n";
@@ -362,6 +393,7 @@ class HabitTrackerControllerTest {
      * Тест успешного обновления привычки.
      */
     @Test
+    @DisplayName("Тест успешного обновления привычки")
     void handleUpdateHabitTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = "1\nНовое название\nНовое описание\n1\n";
@@ -378,6 +410,7 @@ class HabitTrackerControllerTest {
      * Тест обновления привычки с некорректным вводом.
      */
     @Test
+    @DisplayName("Тест обновления привычки с некорректным вводом")
     void handleUpdateHabitInvalidInputTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = "invalid\nНовое название\nНовое описание\ninvalid\n";
@@ -392,6 +425,7 @@ class HabitTrackerControllerTest {
      * Тест успешного удаления привычки.
      */
     @Test
+    @DisplayName("Тест успешного удаления привычки")
     void handleDeleteHabitTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = "1\n";
@@ -408,6 +442,7 @@ class HabitTrackerControllerTest {
      * Тест удаления привычки с некорректным вводом.
      */
     @Test
+    @DisplayName("Тест удаления привычки с некорректным вводом")
     void handleDeleteHabitInvalidInputTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = "invalid\n";
@@ -422,6 +457,7 @@ class HabitTrackerControllerTest {
      * Тест успешной отметки привычки как выполненной.
      */
     @Test
+    @DisplayName("Тест успешной отметки привычки как выполненной")
     void handleMarkCompleteTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = "1\n";
@@ -438,6 +474,7 @@ class HabitTrackerControllerTest {
      * Тест отметки привычки как выполненной с некорректным вводом.
      */
     @Test
+    @DisplayName("Тест отметки привычки как выполненной с некорректным вводом")
     void handleMarkCompleteInvalidInputTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = "invalid\n";
@@ -452,6 +489,7 @@ class HabitTrackerControllerTest {
      * Тест просмотра истории выполнения привычки.
      */
     @Test
+    @DisplayName("Тест просмотра истории выполнения привычки")
     void handleViewHabitHistoryTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = "1\n";
@@ -468,6 +506,7 @@ class HabitTrackerControllerTest {
      * Тест просмотра статистики выполнения привычки.
      */
     @Test
+    @DisplayName("Тест просмотра статистики выполнения привычки")
     void handleViewHabitStatisticsTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         String simulatedInput = "1\n";
@@ -486,6 +525,7 @@ class HabitTrackerControllerTest {
      * Тест генерации отчёта по прогрессу.
      */
     @Test
+    @DisplayName("Тест генерации отчёта по прогрессу")
     void handleGenerateReportTest() {
         habitTrackerController.setLoggedInUser(new User(1, "user@example.com", "password123", "John Doe"));
         List<Habit> mockHabits = Arrays.asList(
@@ -505,6 +545,7 @@ class HabitTrackerControllerTest {
      * Тест генерации отчёта без входа в систему.
      */
     @Test
+    @DisplayName("Тест генерации отчёта без входа в систему")
     void handleGenerateReportNotLoggedInTest() {
         habitTrackerController.handleGenerateReport();
 

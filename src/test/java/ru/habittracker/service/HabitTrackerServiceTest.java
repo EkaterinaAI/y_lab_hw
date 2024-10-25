@@ -10,9 +10,9 @@ import ru.habittracker.BaseHabitTest;
 import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.Habit;
 import ru.habittracker.model.User;
-import ru.habittracker.service.interfaces.IHabitService;
-import ru.habittracker.service.interfaces.IHabitTrackerService;
-import ru.habittracker.service.interfaces.IUserService;
+import ru.habittracker.service.impl.HabitService;
+import ru.habittracker.service.impl.HabitTrackerService;
+import ru.habittracker.service.impl.UserService;
 
 import java.sql.Connection;
 import java.time.LocalDate;
@@ -22,7 +22,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Тестовый класс для {@link ru.habittracker.service.HabitTrackerService}.
+ * Тестовый класс для {@link HabitTrackerService}.
  * <p>
  * Проверяет корректность логики отслеживания выполнения привычек.
  * </p>
@@ -96,6 +96,7 @@ public class HabitTrackerServiceTest extends BaseHabitTest {
      * Тест отметки привычки как выполненной.
      */
     @Test
+    @DisplayName("Тест отметки привычки как выполненной")
     public void testMarkHabitCompletion() {
         Habit habit = habitService.createHabit(testUser.getId(), "Exercise", "Morning exercise", 1);
         assertNotNull(habit, "Habit should not be null.");
@@ -110,6 +111,7 @@ public class HabitTrackerServiceTest extends BaseHabitTest {
      * Тест вычисления текущей серии выполнения привычки.
      */
     @Test
+    @DisplayName("Тест вычисления текущей серии выполнения привычки")
     public void testCalculateStreak() {
         Habit habit = habitService.createHabit(testUser.getId(), "Exercise", "Morning exercise", 1);
         assertNotNull(habit, "Habit should not be null.");
@@ -126,6 +128,7 @@ public class HabitTrackerServiceTest extends BaseHabitTest {
      * Тест вычисления процента успешного выполнения привычки.
      */
     @Test
+    @DisplayName("Тест вычисления процента успешного выполнения привычки")
     public void testCalculateSuccessRate() {
         Habit habit = habitService.createHabit(testUser.getId(), "Exercise", "Morning exercise", 1);
         assertNotNull(habit, "Habit should not be null.");
@@ -145,6 +148,7 @@ public class HabitTrackerServiceTest extends BaseHabitTest {
      * Тест генерации отчёта по прогрессу.
      */
     @Test
+    @DisplayName("Тест генерации отчёта по прогрессу")
     public void testGenerateProgressReport() {
         Habit habit1 = habitService.createHabit(testUser.getId(), "Exercise", "Morning exercise", 1);
         Habit habit2 = habitService.createHabit(testUser.getId(), "Read", "Read a book", 1);
@@ -167,6 +171,7 @@ public class HabitTrackerServiceTest extends BaseHabitTest {
      * Тест получения истории выполнения привычки.
      */
     @Test
+    @DisplayName("Тест получения истории выполнения привычки")
     public void testGetHabitHistory() {
         Habit habit = habitService.createHabit(testUser.getId(), "Meditate", "Evening meditation", 1);
 

@@ -75,13 +75,4 @@ public class AppConfig {
     public String getLiquibaseChangeLog() {
         return properties.getProperty("liquibase.changeLogFile");
     }
-
-    /**
-     * Получает название схемы по умолчанию для Liquibase.
-     *
-     * @return название схемы по умолчанию
-     */
-    public String getLiquibaseDefaultSchema() {
-        return properties.getProperty("liquibase.defaultSchema");
-    }
 }

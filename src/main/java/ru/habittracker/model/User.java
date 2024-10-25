@@ -23,4 +23,10 @@ public class User {
     public String toString() {
         return String.format("ID: %d, Имя: %s, Email: %s", id, name, email);
     }
+
+    public User(String email, String password, String name) {
+        this.email = email;
+        this.password = password;
+        this.name = name;
+    }
 }

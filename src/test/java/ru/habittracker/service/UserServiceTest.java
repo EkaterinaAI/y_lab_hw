@@ -9,7 +9,7 @@ import org.junit.jupiter.api.*;
 import ru.habittracker.BaseHabitTest;
 import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.User;
-import ru.habittracker.service.interfaces.IUserService;
+import ru.habittracker.service.impl.UserService;
 
 import java.sql.Connection;
 import java.util.Optional;
@@ -17,7 +17,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Тестовый класс для {@link ru.habittracker.service.UserService}.
+ * Тестовый класс для {@link UserService}.
  * <p>
  * Проверяет корректность логики управления пользователями.
  * </p>
@@ -85,6 +85,7 @@ public class UserServiceTest extends BaseHabitTest {
      * Тест регистрации нового пользователя.
      */
     @Test
+    @DisplayName("Тест регистрации нового пользователя")
     public void testRegisterUser() {
         Optional<User> userOptional = userService.registerUser("newuser@example.com", "newpassword", "New User");
         assertTrue(userOptional.isPresent(), "User should be successfully registered.");
@@ -98,6 +99,7 @@ public class UserServiceTest extends BaseHabitTest {
      * Тест регистрации пользователя с существующим email.
      */
     @Test
+    @DisplayName("Тест регистрации пользователя с существующим email")
     public void testRegisterUserWithExistingEmail() {
         Optional<User> userOptional = userService.registerUser("testuser@example.com", "password123", "Test User Duplicate");
         assertFalse(userOptional.isPresent(), "Registration with existing email should fail.");
@@ -107,6 +109,7 @@ public class UserServiceTest extends BaseHabitTest {
      * Тест успешного входа в систему.
      */
     @Test
+    @DisplayName("Тест успешного входа в систему")
     public void testLoginUser() {
         Optional<User> userOptional = userService.loginUser("testuser@example.com", "password123");
         assertTrue(userOptional.isPresent(), "User should successfully log in.");
@@ -118,6 +121,7 @@ public class UserServiceTest extends BaseHabitTest {
      * Тест входа в систему с некорректным паролем.
      */
     @Test
+    @DisplayName("Тест входа в систему с некорректным паролем")
     public void testLoginUserWithIncorrectPassword() {
         Optional<User> userOptional = userService.loginUser("testuser@example.com", "wrongpassword");
         assertFalse(userOptional.isPresent(), "Login with incorrect password should fail.");
@@ -127,6 +131,7 @@ public class UserServiceTest extends BaseHabitTest {
      * Тест входа несуществующего пользователя.
      */
     @Test
+    @DisplayName("Тест входа несуществующего пользователя")
     public void testLoginNonexistentUser() {
         Optional<User> userOptional = userService.loginUser("nonexistent@example.com", "password123");
         assertFalse(userOptional.isPresent(), "Login of nonexistent user should fail.");
@@ -136,6 +141,7 @@ public class UserServiceTest extends BaseHabitTest {
      * Тест обновления данных пользователя.
      */
     @Test
+    @DisplayName("Тест обновления данных пользователя")
     public void testUpdateUser() {
         Optional<User> userOptional = userService.loginUser("testuser@example.com", "password123");
         assertTrue(userOptional.isPresent(), "User should be found.");
@@ -154,6 +160,7 @@ public class UserServiceTest extends BaseHabitTest {
      * Тест удаления пользователя.
      */
     @Test
+    @DisplayName("Тест удаления пользователя")
     public void testDeleteUser() {
         Optional<User> userOptional = userService.loginUser("testuser@example.com", "password123");
         assertTrue(userOptional.isPresent(), "User should be found.");

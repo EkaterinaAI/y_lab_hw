@@ -1,5 +1,6 @@
 package ru.habittracker.config;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,6 +19,7 @@ public class AppConfigTest {
      * Тест загрузки всех свойств конфигурации.
      */
     @Test
+    @DisplayName("Проверка загрузки всех свойств конфигурации приложения")
     public void testLoadProperties() {
         AppConfig appConfig = new AppConfig();
 
@@ -26,6 +28,5 @@ public class AppConfigTest {
         assertNotNull(appConfig.getDbPassword(), "Database password should not be null.");
         assertNotNull(appConfig.getDbDriver(), "Database driver should not be null.");
         assertNotNull(appConfig.getLiquibaseChangeLog(), "Liquibase changelog file should not be null.");
-        assertNotNull(appConfig.getLiquibaseDefaultSchema(), "Liquibase default schema should not be null.");
     }
 }

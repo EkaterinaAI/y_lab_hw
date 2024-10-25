@@ -1,10 +1,10 @@
-package ru.habittracker.service;
+package ru.habittracker.service.impl;
 
 import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.User;
-import ru.habittracker.repository.UserRepository;
-import ru.habittracker.repository.interfaces.IUserRepository;
-import ru.habittracker.service.interfaces.IUserService;
+import ru.habittracker.repository.impl.UserRepository;
+import ru.habittracker.repository.IUserRepository;
+import ru.habittracker.service.IUserService;
 
 import java.util.Optional;
 
@@ -29,14 +29,6 @@ public class UserService implements IUserService {
         this.userRepository = new UserRepository(dbManager);
     }
 
-    /**
-     * Регистрирует нового пользователя.
-     *
-     * @param email    email пользователя
-     * @param password пароль
-     * @param name     имя
-     * @return объект пользователя, если регистрация успешна
-     */
     @Override
     public Optional<User> registerUser(String email, String password, String name) {
         // Проверка на уникальность email
@@ -45,17 +37,10 @@ public class UserService implements IUserService {
             return Optional.empty();
         }
 
-        User user = new User(0, email, password, name);
+        User user = new User(email, password, name);
         return userRepository.save(user);
     }
 
-    /**
-     * Выполняет вход пользователя в систему.
-     *
-     * @param email    email пользователя
-     * @param password пароль
-     * @return объект пользователя, если вход успешен
-     */
     @Override
     public Optional<User> loginUser(String email, String password) {
         Optional<User> user = userRepository.findByEmail(email);
@@ -65,15 +50,6 @@ public class UserService implements IUserService {
         return Optional.empty();
     }
 
-    /**
-     * Обновляет данные пользователя.
-     *
-     * @param userId      ID пользователя
-     * @param newEmail    новый email
-     * @param newPassword новый пароль
-     * @param newName     новое имя
-     * @return true, если обновление прошло успешно
-     */
     @Override
     public boolean updateUser(int userId, String newEmail, String newPassword, String newName) {
         Optional<User> userOptional = userRepository.findById(userId);
@@ -92,12 +68,6 @@ public class UserService implements IUserService {
         return userRepository.update(user);
     }
 
-    /**
-     * Удаляет пользователя.
-     *
-     * @param userId ID пользователя
-     * @return true, если удаление прошло успешно
-     */
     @Override
     public boolean deleteUser(int userId) {
         return userRepository.delete(userId);

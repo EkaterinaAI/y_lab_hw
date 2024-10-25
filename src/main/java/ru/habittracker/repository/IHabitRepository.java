@@ -1,4 +1,4 @@
-package ru.habittracker.repository.interfaces;
+package ru.habittracker.repository;
 
 import ru.habittracker.model.Habit;
 

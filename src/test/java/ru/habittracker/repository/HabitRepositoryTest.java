@@ -10,8 +10,8 @@ import ru.habittracker.BaseHabitTest;
 import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.Habit;
 import ru.habittracker.model.User;
-import ru.habittracker.repository.interfaces.IHabitRepository;
-import ru.habittracker.repository.interfaces.IUserRepository;
+import ru.habittracker.repository.impl.HabitRepository;
+import ru.habittracker.repository.impl.UserRepository;
 
 import java.sql.Connection;
 import java.time.LocalDate;
@@ -21,7 +21,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Тестовый класс для {@link ru.habittracker.repository.HabitRepository}.
+ * Тестовый класс для {@link HabitRepository}.
  * <p>
  * Проверяет корректность операций с привычками в базе данных.
  * </p>
@@ -94,6 +94,7 @@ public class HabitRepositoryTest extends BaseHabitTest {
      * Тест сохранения привычки.
      */
     @Test
+    @DisplayName("Тест сохранения привычки")
     public void testSaveHabit() {
         Habit habit = new Habit(0, "Exercise", "Morning exercise", 1, testUser.getId(), LocalDate.now());
         Habit savedHabit = habitRepository.save(habit);
@@ -107,6 +108,7 @@ public class HabitRepositoryTest extends BaseHabitTest {
      * Тест поиска привычки по ID и ID пользователя.
      */
     @Test
+    @DisplayName("Тест поиска привычки по ID и ID пользователя")
     public void testFindByIdAndUserId() {
         Habit habit = new Habit(0, "Exercise", "Morning exercise", 1, testUser.getId(), LocalDate.now());
         Habit savedHabit = habitRepository.save(habit);
@@ -120,6 +122,7 @@ public class HabitRepositoryTest extends BaseHabitTest {
      * Тест поиска всех привычек пользователя.
      */
     @Test
+    @DisplayName("Тест поиска всех привычек пользователя")
     public void testFindByUserId() {
         Habit habit1 = new Habit(0, "Exercise", "Morning exercise", 1, testUser.getId(), LocalDate.now());
         Habit habit2 = new Habit(0, "Read", "Read a book", 2, testUser.getId(), LocalDate.now());
@@ -134,6 +137,7 @@ public class HabitRepositoryTest extends BaseHabitTest {
      * Тест обновления привычки.
      */
     @Test
+    @DisplayName("Тест обновления привычки")
     public void testUpdateHabit() {
         Habit habit = new Habit(0, "Exercise", "Morning exercise", 1, testUser.getId(), LocalDate.now());
         Habit savedHabit = habitRepository.save(habit);
@@ -155,6 +159,7 @@ public class HabitRepositoryTest extends BaseHabitTest {
      * Тест удаления привычки по ID и ID пользователя.
      */
     @Test
+    @DisplayName("Тест удаления привычки по ID и ID пользователя")
     public void testDeleteByIdAndUserId() {
         Habit habit = new Habit(0, "Exercise", "Morning exercise", 1, testUser.getId(), LocalDate.now());
         Habit savedHabit = habitRepository.save(habit);

@@ -10,8 +10,8 @@ import ru.habittracker.BaseHabitTest;
 import ru.habittracker.config.DatabaseConnectionManager;
 import ru.habittracker.model.Habit;
 import ru.habittracker.model.User;
-import ru.habittracker.service.interfaces.IHabitService;
-import ru.habittracker.service.interfaces.IUserService;
+import ru.habittracker.service.impl.HabitService;
+import ru.habittracker.service.impl.UserService;
 
 import java.sql.Connection;
 import java.time.LocalDate;
@@ -21,7 +21,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Тестовый класс для {@link ru.habittracker.service.HabitService}.
+ * Тестовый класс для {@link HabitService}.
  * <p>
  * Проверяет корректность логики управления привычками.
  * </p>
@@ -93,6 +93,7 @@ public class HabitServiceTest extends BaseHabitTest {
      * Тест создания привычки.
      */
     @Test
+    @DisplayName("Тест создания привычки")
     public void testCreateHabit() {
         Habit habit = habitService.createHabit(testUser.getId(), "Exercise", "Morning exercise", 1);
         assertNotNull(habit, "Habit should not be null.");
@@ -104,6 +105,7 @@ public class HabitServiceTest extends BaseHabitTest {
      * Тест получения всех привычек пользователя.
      */
     @Test
+    @DisplayName("Тест получения всех привычек пользователя")
     public void testGetHabits() {
         habitService.createHabit(testUser.getId(), "Exercise", "Morning exercise", 1);
         habitService.createHabit(testUser.getId(), "Read", "Read a book", 2);
@@ -116,6 +118,7 @@ public class HabitServiceTest extends BaseHabitTest {
      * Тест обновления привычки.
      */
     @Test
+    @DisplayName("Тест обновления привычки")
     public void testUpdateHabit() {
         Habit habit = habitService.createHabit(testUser.getId(), "Exercise", "Morning exercise", 1);
         assertNotNull(habit, "Habit should not be null.");
@@ -135,6 +138,7 @@ public class HabitServiceTest extends BaseHabitTest {
      * Тест удаления привычки.
      */
     @Test
+    @DisplayName("Тест удаления привычки")
     public void testDeleteHabit() {
         Habit habit = habitService.createHabit(testUser.getId(), "Exercise", "Morning exercise", 1);
         assertNotNull(habit, "Habit should not be null.");
@@ -150,6 +154,7 @@ public class HabitServiceTest extends BaseHabitTest {
      * Тест получения привычек по дате создания.
      */
     @Test
+    @DisplayName("Тест получения привычек по дате создания")
     public void testGetHabitsByCreationDate() {
         habitService.createHabit(testUser.getId(), "Exercise", "Morning exercise", 1);
         habitService.createHabit(testUser.getId(), "Read", "Read a book", 2);
@@ -167,6 +172,7 @@ public class HabitServiceTest extends BaseHabitTest {
      * Тест получения привычек по частоте.
      */
     @Test
+    @DisplayName("Тест получения привычек по частоте")
     public void testGetHabitsByFrequency() {
         habitService.createHabit(testUser.getId(), "Exercise", "Morning exercise", 1); // Ежедневная
         habitService.createHabit(testUser.getId(), "Read", "Read a book", 2); // Недельная
@@ -185,6 +191,7 @@ public class HabitServiceTest extends BaseHabitTest {
      * Тест обновления несуществующей привычки.
      */
     @Test
+    @DisplayName("Тест обновления несуществующей привычки")
     public void testUpdateNonexistentHabit() {
         boolean isUpdated = habitService.updateHabit(testUser.getId(), 999, "Nonexistent", "Does not exist", 1);
         assertFalse(isUpdated, "Updating a nonexistent habit should return false.");
@@ -194,6 +201,7 @@ public class HabitServiceTest extends BaseHabitTest {
      * Тест удаления несуществующей привычки.
      */
     @Test
+    @DisplayName("Тест удаления несуществующей привычки")
     public void testDeleteNonexistentHabit() {
         boolean isDeleted = habitService.deleteHabit(testUser.getId(), 999);
         assertFalse(isDeleted, "Deleting a nonexistent habit should return false.");

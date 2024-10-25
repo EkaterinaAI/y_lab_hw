@@ -8,6 +8,11 @@
 
     <!-- Вставка пользователей -->
     <changeSet id="11" author="ishchuk">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM service.users;
+            </sqlCheck>
+        </preConditions>
         <insert tableName="users" schemaName="service">
             <column name="email" value="alice@example.com"/>
             <column name="password" value="password123"/>
@@ -27,6 +32,11 @@
 
     <!-- Вставка привычек -->
     <changeSet id="12" author="ishchuk">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM service.habits;
+            </sqlCheck>
+        </preConditions>
         <insert tableName="habits" schemaName="service">
             <column name="title" value="Чтение"/>
             <column name="description" value="Читать по 30 минут каждый день"/>
@@ -52,6 +62,11 @@
 
     <!-- Вставка записей привычек -->
     <changeSet id="13" author="ishchuk">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM service.habit_records;
+            </sqlCheck>
+        </preConditions>
         <insert tableName="habit_records" schemaName="service">
             <column name="habit_id" valueNumeric="1"/>
             <column name="date" valueDate="2024-04-01"/>

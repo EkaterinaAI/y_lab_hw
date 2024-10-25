@@ -8,25 +8,38 @@
 
     <!-- Создание последовательности для пользователей -->
     <changeSet id="2" author="ishchuk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sequenceExists sequenceName="user_seq" schemaName="service"/>
+            </not>
+        </preConditions>
         <createSequence sequenceName="user_seq" schemaName="service"/>
     </changeSet>
 
     <!-- Создание таблицы пользователей -->
     <changeSet id="3" author="ishchuk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="users" schemaName="service"/>
+            </not>
+        </preConditions>
         <createTable tableName="users" schemaName="service">
-            <column name="id" type="INTEGER">
+            <column name="id" type="INTEGER" remarks="Уникальный идентификатор пользователя">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="email" type="VARCHAR(255)">
+            <column name="email" type="VARCHAR(255)" remarks="Электронная почта пользователя">
                 <constraints nullable="false" unique="true"/>
             </column>
-            <column name="password" type="VARCHAR(255)"/>
-            <column name="name" type="VARCHAR(255)"/>
+            <column name="password" type="VARCHAR(255)" remarks="Пароль пользователя"/>
+            <column name="name" type="VARCHAR(255)" remarks="Имя пользователя"/>
         </createTable>
     </changeSet>
 
     <!-- Установка автоинкремента для пользователей -->
     <changeSet id="4" author="ishchuk">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="users" schemaName="service"/>
+        </preConditions>
         <sql>
             ALTER TABLE service.users ALTER COLUMN id SET DEFAULT nextval('service.user_seq');
         </sql>
@@ -34,27 +47,40 @@
 
     <!-- Создание последовательности для привычек -->
     <changeSet id="5" author="ishchuk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sequenceExists sequenceName="habit_seq" schemaName="service"/>
+            </not>
+        </preConditions>
         <createSequence sequenceName="habit_seq" schemaName="service"/>
     </changeSet>
 
     <!-- Создание таблицы привычек -->
     <changeSet id="6" author="ishchuk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="habits" schemaName="service"/>
+            </not>
+        </preConditions>
         <createTable tableName="habits" schemaName="service">
-            <column name="id" type="INTEGER">
+            <column name="id" type="INTEGER" remarks="Уникальный идентификатор привычки">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="title" type="VARCHAR(255)"/>
-            <column name="description" type="VARCHAR(255)"/>
-            <column name="frequency" type="INTEGER"/>
-            <column name="user_id" type="INTEGER">
+            <column name="title" type="VARCHAR(255)" remarks="Название привычки"/>
+            <column name="description" type="VARCHAR(255)" remarks="Описание привычки"/>
+            <column name="frequency" type="INTEGER" remarks="Частота выполнения привычки"/>
+            <column name="user_id" type="INTEGER" remarks="ID пользователя, которому принадлежит привычка">
                 <constraints nullable="false" foreignKeyName="fk_habits_users" references="service.users(id)"/>
             </column>
-            <column name="creation_date" type="DATE"/>
+            <column name="creation_date" type="DATE" remarks="Дата создания привычки"/>
         </createTable>
     </changeSet>
 
     <!-- Установка автоинкремента для привычек -->
     <changeSet id="7" author="ishchuk">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="habits" schemaName="service"/>
+        </preConditions>
         <sql>
             ALTER TABLE service.habits ALTER COLUMN id SET DEFAULT nextval('service.habit_seq');
         </sql>
@@ -62,25 +88,38 @@
 
     <!-- Создание последовательности для записей привычек -->
     <changeSet id="8" author="ishchuk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sequenceExists sequenceName="habit_record_seq" schemaName="service"/>
+            </not>
+        </preConditions>
         <createSequence sequenceName="habit_record_seq" schemaName="service"/>
     </changeSet>
 
     <!-- Создание таблицы записей привычек -->
     <changeSet id="9" author="ishchuk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="habit_records" schemaName="service"/>
+            </not>
+        </preConditions>
         <createTable tableName="habit_records" schemaName="service">
-            <column name="id" type="INTEGER">
+            <column name="id" type="INTEGER" remarks="Уникальный идентификатор записи привычки">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="habit_id" type="INTEGER">
+            <column name="habit_id" type="INTEGER" remarks="ID привычки, к которой относится запись">
                 <constraints nullable="false" foreignKeyName="fk_habit_records_habits" references="service.habits(id)"/>
             </column>
-            <column name="date" type="DATE"/>
-            <column name="completed" type="BOOLEAN"/>
+            <column name="date" type="DATE" remarks="Дата выполнения привычки"/>
+            <column name="completed" type="BOOLEAN" remarks="Статус выполнения привычки"/>
         </createTable>
     </changeSet>
 
     <!-- Установка автоинкремента для записей привычек -->
     <changeSet id="10" author="ishchuk">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="habit_records" schemaName="service"/>
+        </preConditions>
         <sql>
             ALTER TABLE service.habit_records ALTER COLUMN id SET DEFAULT nextval('service.habit_record_seq');
         </sql>
